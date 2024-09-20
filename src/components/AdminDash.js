@@ -1,3 +1,4 @@
+// src/components/AdminDash.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Modal, Button } from 'react-bootstrap'; 
 import axiosInstance from '../api/axiosInstance'; // Import the Axios instance
@@ -135,7 +136,7 @@ const AdminDash = () => {
       <h2>Movie List</h2>
 
       {/* Button to open the modal for adding a new movie */}
-      <button onClick={() => setShowAddMovieModal(true)} className="btn btn-primary mb-3">
+      <button onClick={() => setShowAddMovieModal(true)} className="btn btn-primary custom-admin-button mb-3">
         Add New Movie
       </button>
 
@@ -166,10 +167,10 @@ const AdminDash = () => {
                   <td>{movie.genre}</td>
                   <td>{movie.description}</td>
                   <td>
-                    <button onClick={() => handleEditMovie(movie)} className="btn btn-warning btn-sm me-2">
+                    <button onClick={() => handleEditMovie(movie)} className="btn btn-warning custom-admin-button btn-sm me-2">
                       Update
                     </button>
-                    <button onClick={() => handleDeleteMovie(movie._id || movie.id)} className="btn btn-danger btn-sm">
+                    <button onClick={() => handleDeleteMovie(movie._id || movie.id)} className="btn btn-danger custom-admin-button btn-sm">
                       Delete
                     </button>
                   </td>
@@ -243,7 +244,7 @@ const AdminDash = () => {
                 rows="3"
               />
             </div>
-            <button type="submit" className="btn btn-primary">
+            <button type="submit" className="btn btn-primary custom-admin-button">
               {editMovie ? 'Update Movie' : 'Add Movie'}
             </button>
           </form>
