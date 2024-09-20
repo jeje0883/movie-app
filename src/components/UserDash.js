@@ -1,27 +1,32 @@
-import React, { useState, useEffect } from 'react';
-
+// src/components/UserDash.js
+import React, { useState, useEffect, useContext } from 'react';
+import { Modal, Button } from 'react-bootstrap'; 
+import axiosInstance from '../api/axiosInstance'; 
 import '../styles/sharedStyles.css'; // Your custom styles if needed
+import { UserContext } from '../context/UserContext';
 
 const UserDash = () => {
+  const { user } = useContext(UserContext); // Get user data from context
   const [movies, setMovies] = useState([]); // List of movies
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [comment, setComment] = useState(''); // For storing new comment
-  const [selectedMovieId, setSelectedMovieId] = useState(null); // Holds movie id for adding comment
+  const [selectedMovie, setSelectedMovie] = useState(null); // Holds movie object for adding comment
+  const [showModal, setShowModal] = useState(false);
 
-  // Fetch movies when the component mounts
+  // Base URL for the API
+  const API_BASE_URL = 'https://movieapp-api-lms1.onrender.com';
+
+  // Function to fetch movies
   const fetchMovies = async () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`https://movieapp-api-lms1.onrender.com/movies/getMovies`);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch movies: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setMovies(data.movies || data); // Adjust based on API response structure
+      const response = await axiosInstance.get(`/movies/getMovies`);
+      setMovies(response.data.movies || response.data); // Adjust based on API response structure
     } catch (err) {
-      setError(err.message);
+      console.error('Error fetching movies:', err.response?.data?.message || err.message);
+      setError(err.response?.data?.message || 'Failed to fetch movies.');
     } finally {
       setLoading(false);
     }
@@ -31,8 +36,23 @@ const UserDash = () => {
     fetchMovies();
   }, []);
 
-  // Add comment to the selected movie
-  const handleAddComment = async (e, movieId) => {
+  // Function to open the Add Comment modal
+  const handleAddCommentModal = (movie) => {
+    setSelectedMovie(movie);
+    setComment(''); // Reset comment input
+    setShowModal(true);
+  };
+
+  // Function to close the modal
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setSelectedMovie(null);
+    setComment('');
+    setError(null);
+  };
+
+  // Function to add a comment to a movie
+  const handleAddComment = async (e) => {
     e.preventDefault();
 
     if (!comment.trim()) {
@@ -40,23 +60,32 @@ const UserDash = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`https://movieapp-api-lms1.onrender.com/movies/addComment/${movieId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ comment }),
-      });
+    console.log(`Comment: ${comment.trim()}`);
 
-      if (!response.ok) {
-        throw new Error(`Failed to add comment: ${response.statusText}`);
-      }
+    // Retrieve the token from localStorage
+    const token = localStorage.getItem('userToken');
+
+    if (!token) {
+      setError('User is not authenticated. Please log in.');
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(
+        `movies/addComment/${selectedMovie._id || selectedMovie.id}`,
+        { comment: comment,
+          user: user.id
+         }
+      );
+
+      console.log('New comment added:', response.data);
 
       setComment(''); // Reset comment input
-      await fetchMovies(); // Refresh movies to display new comment
+      setShowModal(false); // Close modal after submission
+      fetchMovies(); // Refresh movies to display new comment
     } catch (err) {
-      setError(err.message);
+      console.error('Error adding comment:', err.response?.data?.message || err.message);
+      setError(err.response?.data?.message || 'Failed to add comment.');
     }
   };
 
@@ -64,22 +93,24 @@ const UserDash = () => {
     <div className="container mt-4">
       <h2>Movies List</h2>
 
+      {/* Display loading or error message */}
       {loading && <p>Loading movies...</p>}
       {error && <p className="text-danger">{error}</p>}
 
+      {/* Movies Grid */}
       {!loading && !error && (
         <div className="row">
           {movies.length > 0 ? (
             movies.map((movie) => (
               <div className="col-md-4 mb-4" key={movie.id || movie._id}>
-                <div className="card">
-                  <div className="card-body">
+                <div className="card h-100">
+                  <div className="card-body d-flex flex-column">
                     <h5 className="card-title">{movie.title}</h5>
                     <p className="card-text"><strong>Director:</strong> {movie.director}</p>
                     <p className="card-text"><strong>Year:</strong> {movie.year}</p>
                     <p className="card-text"><strong>Genre:</strong> {movie.genre}</p>
                     <p className="card-text">{movie.description}</p>
-                    <div>
+                    <div className="mt-auto">
                       <h6>Comments:</h6>
                       <ul>
                         {movie.comments && movie.comments.length > 0 ? (
@@ -88,20 +119,13 @@ const UserDash = () => {
                           <p>No comments yet</p>
                         )}
                       </ul>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => handleAddCommentModal(movie)}
+                      >
+                        Add Comment
+                      </button>
                     </div>
-                    <form onSubmit={(e) => handleAddComment(e, movie.id || movie._id)}>
-                      <div className="mb-2">
-                        <input
-                          type="text"
-                          className="form-control"
-                          placeholder="Add a comment"
-                          value={selectedMovieId === (movie.id || movie._id) ? comment : ''}
-                          onFocus={() => setSelectedMovieId(movie.id || movie._id)}
-                          onChange={(e) => setComment(e.target.value)}
-                        />
-                      </div>
-                      <button type="submit" className="btn btn-primary">Add Comment</button>
-                    </form>
                   </div>
                 </div>
               </div>
@@ -110,6 +134,36 @@ const UserDash = () => {
             <p>No movies found. Start adding some!</p>
           )}
         </div>
+      )}
+
+      {/* Comment Modal */}
+      {selectedMovie && (
+        <Modal show={showModal} onHide={handleCloseModal}>
+          <Modal.Header closeButton>
+            <Modal.Title>Add Comment for "{selectedMovie.title}"</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            <form onSubmit={handleAddComment}>
+              <div className="mb-3">
+                <textarea
+                  className="form-control"
+                  placeholder="Add a comment"
+                  value={comment}
+                  onChange={(e) => setComment(e.target.value)}
+                  rows="3"
+                  required
+                />
+              </div>
+              {error && <p className="text-danger">{error}</p>}
+              <button id='addComment' type="submit" className="btn btn-primary">Submit Comment</button>
+            </form>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={handleCloseModal}>
+              Close
+            </Button>
+          </Modal.Footer>
+        </Modal>
       )}
     </div>
   );
