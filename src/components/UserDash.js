@@ -1,6 +1,7 @@
 // src/components/UserDash.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Modal, Button } from 'react-bootstrap'; 
+import { useNavigate } from 'react-router-dom'; // For navigation
 import axiosInstance from '../api/axiosInstance'; 
 import '../styles/sharedStyles.css'; // Your custom styles if needed
 import { UserContext } from '../context/UserContext';
@@ -13,6 +14,7 @@ const UserDash = () => {
   const [comment, setComment] = useState(''); // For storing new comment
   const [selectedMovie, setSelectedMovie] = useState(null); // Holds movie object for adding comment
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate(); // Use navigate to redirect to login
 
   // Base URL for the API
   const API_BASE_URL = 'https://movieapp-api-lms1.onrender.com';
@@ -38,9 +40,13 @@ const UserDash = () => {
 
   // Function to open the Add Comment modal
   const handleAddCommentModal = (movie) => {
-    setSelectedMovie(movie);
-    setComment(''); // Reset comment input
-    setShowModal(true);
+    if (!user) {
+      navigate('/login'); // If not logged in, redirect to login
+    } else {
+      setSelectedMovie(movie);
+      setComment(''); // Reset comment input
+      setShowModal(true);
+    }
   };
 
   // Function to close the modal
@@ -73,9 +79,7 @@ const UserDash = () => {
     try {
       const response = await axiosInstance.post(
         `movies/addComment/${selectedMovie._id || selectedMovie.id}`,
-        { comment: comment,
-          user: user.id
-         }
+        { comment: comment, user: user.id }
       );
 
       console.log('New comment added:', response.data);
@@ -119,12 +123,23 @@ const UserDash = () => {
                           <p>No comments yet</p>
                         )}
                       </ul>
-                      <button
-                        className="btn btn-primary"
-                        onClick={() => handleAddCommentModal(movie)}
-                      >
-                        Add Comment
-                      </button>
+
+                      {/* Show "Login to Comment" if user is not logged in */}
+                      {!user ? (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => navigate('/login')}
+                        >
+                          Login to Comment
+                        </button>
+                      ) : (
+                        <button
+                          className="btn btn-primary"
+                          onClick={() => handleAddCommentModal(movie)}
+                        >
+                          Add Comment
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>

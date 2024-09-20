@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Movies from './pages/Movies';
 import NavBar from './components/NavBar';
+import NotFound from './pages/404';
 
 
 
@@ -20,7 +21,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/movies" element={<Movies />} />
-            {/*<Route path="*" element={<NotFound />} /> */}
+            <Route path="*" element={<NotFound />} /> 
           </Routes>
       </BrowserRouter>
     </UserProvider>

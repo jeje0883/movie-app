@@ -19,6 +19,7 @@ const Navbar = () => {
       <div className="navbar-links">
         {!user ? (
           <>
+          <Link to="/movies" className="navbar-link">Movies</Link>
             <Link to="/login" className="navbar-link">Login</Link>
             <Link to="/register" className="navbar-link">Register</Link>
           </>

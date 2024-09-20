@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Notyf } from 'notyf';
+import 'notyf/notyf.min.css'; // Import Notyf styles
 
 const Login = () => {
     const [email, setEmail] = useState('');
@@ -7,6 +9,16 @@ const Login = () => {
     const [confirmPassword, setConfirmPassword] = useState(''); // New state for confirm password
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const navigate = useNavigate(); // Use navigate for redirecting
+
+    // Initialize Notyf
+    const notyf = new Notyf({
+        duration: 3000, // Notification duration (in milliseconds)
+        position: {
+            x: 'left',
+            y: 'bottom',
+        },
+    });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,18 +37,27 @@ const Login = () => {
                 body: JSON.stringify({ email, password }),
             });
 
-            //response is not okay
+            // Response is not okay
             if (!res.ok) {
                 const error = await res.json();
                 throw new Error(error.message);
             }
 
-            //response is okay
+            // Response is okay
             const data = await res.json();
             console.log(`Registration Res: ${JSON.stringify(data)}`);
 
+            // Show a success notification using Notyf
+            notyf.success('Registered Successfully! Redirecting to login...');
+
+            // Delay the navigation to login after showing the notification
+            setTimeout(() => {
+                navigate('/login'); // Redirect to login page
+            }, 3000); // 3 seconds delay to allow the notification to be seen
+
         } catch (err) {
             setError(err.message);
+            notyf.error(err.message); // Show error notification
         } finally {
             setLoading(false); // Set loading back to false
         }

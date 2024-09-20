@@ -11,9 +11,7 @@ const Movies = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      setLoading(false); // Stop loading when user data is available
-    }
+    setLoading(false); // Stop loading after checking the user state
   }, [user]);
 
   if (loading) {
@@ -22,7 +20,13 @@ const Movies = () => {
 
   return (
     <>
-      {user.isAdmin ? <AdminDash /> : <UserDash />}
+      {/* Render AdminDash if user is logged in and an admin */}
+      {user && user.isAdmin ? (
+        <AdminDash />
+      ) : (
+        /* Render UserDash if the user is not logged in or not an admin */
+        <UserDash />
+      )}
     </>
   );
 };
