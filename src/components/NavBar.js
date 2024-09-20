@@ -15,7 +15,7 @@ const Navbar = () => {
 
   return (
     <nav className="navbar">
-      <h1 className="navbar-logo">MyFitnessApp</h1>
+      <h1 className="navbar-logo">Movies Collections</h1>
       <div className="navbar-links">
         {!user ? (
           <>
