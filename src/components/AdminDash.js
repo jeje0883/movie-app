@@ -1,13 +1,13 @@
-// src/components/AdminDash.js
 import React, { useState, useEffect, useContext } from 'react';
 import { Modal, Button } from 'react-bootstrap'; 
-import axiosInstance from '../api/axiosInstance'; // Import the Axios instance
+import { Notyf } from 'notyf'; // Import Notyf
+import 'notyf/notyf.min.css'; // Import Notyf styles
+import axiosInstance from '../api/axiosInstance'; // Import Axios instance
 import { UserContext } from '../context/UserContext'; // Import UserContext
 import '../styles/sharedStyles.css'; // Import the CSS file
 
 const AdminDash = () => {
   const { user } = useContext(UserContext); // Access user from context
-
   const [editMovie, setEditMovie] = useState(null);
   const [showAddMovieModal, setShowAddMovieModal] = useState(false); 
   const [movies, setMovies] = useState([]); // List of movies
@@ -21,20 +21,30 @@ const AdminDash = () => {
     genre: ''
   });
 
+  // Initialize Notyf for notifications
+  const notyf = new Notyf({
+    duration: 3000, // 3 seconds
+    position: {
+      x: 'left',
+      y: 'bottom',
+    },
+  });
+
   useEffect(() => {
     // Fetch movies when component mounts
     fetchMovies();
   }, []);
 
-  // Fetch movies when the component mounts
   const fetchMovies = async () => {
     setLoading(true);
     setError(null);
     try {
       const response = await axiosInstance.get('/movies/getMovies');
       setMovies(response.data.movies || response.data); // Adjust based on API response structure
+      notyf.success('Movies loaded successfully!');
     } catch (err) {
       setError(err.response?.data?.message || err.message);
+      notyf.error('Failed to load movies.');
     } finally {
       setLoading(false);
     }
@@ -58,9 +68,11 @@ const AdminDash = () => {
       });
       handleCloseModal(); // Close modal after submission
       fetchMovies(); // Refresh the movies list
+      notyf.success('Movie added successfully!');
     } catch (err) {
       console.error('Error adding movie:', err.response?.data?.message || err.message);
       setError(err.response?.data?.message || err.message);
+      notyf.error('Failed to add movie.');
     }
   };
 
@@ -94,9 +106,11 @@ const AdminDash = () => {
 
       handleCloseModal(); // Close modal after updating
       await fetchMovies(); // Re-fetch movies to reflect the updated entry
+      notyf.success('Movie updated successfully!');
     } catch (err) {
       console.error('Error updating movie:', err.response?.data?.message || err.message);
       setError(err.response?.data?.message || err.message);
+      notyf.error('Failed to update movie.');
     }
   };
 
@@ -111,9 +125,11 @@ const AdminDash = () => {
       console.log('Movie deleted:', response.data);
 
       await fetchMovies(); // Re-fetch movies to reflect deletion
+      notyf.success('Movie deleted successfully!');
     } catch (err) {
       console.error('Error deleting movie:', err.response?.data?.message || err.message);
       setError(err.response?.data?.message || err.message);
+      notyf.error('Failed to delete movie.');
     }
   };
 
@@ -186,7 +202,7 @@ const AdminDash = () => {
       )}
 
       {/* Modal to add or edit a movie */}
-      <Modal show={showAddMovieModal} onHide={handleCloseModal}>
+      <Modal show={showAddMovieModal} onHide={handleCloseModal} centered>
         <Modal.Header closeButton>
           <Modal.Title>{editMovie ? `Edit "${editMovie.title}"` : 'Add New Movie'}</Modal.Title>
         </Modal.Header>

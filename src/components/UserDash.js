@@ -118,11 +118,17 @@ const UserDash = () => {
                       <h6>Comments:</h6>
                       <ul>
                         {movie.comments && movie.comments.length > 0 ? (
-                          movie.comments.map((c, index) => <li key={index}>{c}</li>)
+                          movie.comments.map((c, index) => (
+                            <li key={c._id || index}>
+                              <strong>User:</strong> {c.userId} <br />
+                              <strong>Comment:</strong> {c.comment}
+                            </li>
+                          ))
                         ) : (
                           <p>No comments yet</p>
                         )}
-                      </ul>
+                        </ul>
+
 
                       {/* Show "Login to Comment" if user is not logged in */}
                       {!user ? (
